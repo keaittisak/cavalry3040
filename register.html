@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ลงทะเบียนงานเลี้ยงสังสรรค์ ปี 69 | นนส.เหล่า ม.30/40</title>
+  <meta name="description" content="ลงทะเบียนเข้าร่วมงานเลี้ยงสังสรรค์ประจำปี 2569 นักเรียนนายสิบทหารม้า 30/40">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="registration-page">
+  <main class="registration-shell">
+    <img class="registration-bg" src="assets/cavalry-hero-tank-horse.png" alt="ฉากทหารม้าโทนฟ้าหม่น">
+    <div class="registration-shade"></div>
+
+    <header class="site-header registration-header" aria-label="หัวเว็บไซต์">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="assets/Logo3040.png" alt="โลโก้ทหารม้า รุ่น 30/40">
+        <span class="brand__text">นนส.เหล่า ม.30/40</span>
+      </a>
+      <nav class="nav" aria-label="เมนูหลัก">
+        <a href="index.html">หน้าแรก</a>
+        <a class="is-active" href="register.html">งานเลี้ยงสังสรรค์ ปี 69</a>
+        <a href="directory.html">ทำเนียบปัจจุบัน</a>
+        <a href="#">กิจกรรม</a>
+        <a href="committee.html">คณะกรรมการรุ่น</a>
+        <a href="room-admin.html">จัดการห้องพัก</a>
+      </nav>
+    </header>
+
+    <section class="registration-hero" aria-label="ลงทะเบียนงานเลี้ยงสังสรรค์">
+      <div class="registration-copy">
+        <p class="eyebrow">ลงทะเบียนเข้าร่วมงาน</p>
+        <h2>งานเลี้ยงสังสรรค์ นนส.​เหล่า ม. ประจำปี 2569</h2>
+        <p>กรอกข้อมูลผู้เข้าร่วมงานและรายละเอียดเสื้อ เพื่อให้คณะทำงานจัดเตรียมที่นั่ง อาหาร และของที่ระลึกได้ครบถ้วน
+        </p>
+      </div>
+
+      <form class="registration-form" id="party-registration" action="#" method="post">
+        <div class="form-grid">
+          <label class="form-field">
+            <span>ยศ</span>
+            <input type="text" name="rank" autocomplete="honorific-prefix">
+          </label>
+
+          <label class="form-field">
+            <span>ชื่อ</span>
+            <input type="text" name="firstName" autocomplete="given-name" required>
+          </label>
+
+          <label class="form-field">
+            <span>นามสกุล</span>
+            <input type="text" name="lastName" autocomplete="family-name" required>
+          </label>
+
+          <label class="form-field">
+            <span>เบอร์โทร</span>
+            <input type="tel" name="phone" inputmode="tel" autocomplete="tel" required>
+          </label>
+
+          <label class="form-field">
+            <span>สังกัด</span>
+            <input type="text" name="unit" required>
+          </label>
+
+          <label class="form-field">
+            <span>จำนวนผู้เข้าร่วมงาน</span>
+            <input type="number" name="guestCount" min="1" value="1" required>
+          </label>
+
+          <label class="form-field">
+            <span>จำนวนเสื้อ</span>
+            <input type="number" name="shirtCount" min="0" value="0" required>
+          </label>
+        </div>
+
+        <fieldset class="shirt-sizes">
+          <legend>ไซส์เสื้อ</legend>
+          <label><input type="checkbox" name="shirtSize" value="S"> <span>S</span></label>
+          <label><input type="checkbox" name="shirtSize" value="M"> <span>M</span></label>
+          <label><input type="checkbox" name="shirtSize" value="L"> <span>L</span></label>
+          <label><input type="checkbox" name="shirtSize" value="XL"> <span>XL</span></label>
+          <label><input type="checkbox" name="shirtSize" value="2XL"> <span>2XL</span></label>
+          <label><input type="checkbox" name="shirtSize" value="3XL"> <span>3XL</span></label>
+        </fieldset>
+
+        <label class="form-field room-booking-field">
+          <span>ห้องพักที่เลือกจอง</span>
+          <select name="roomId" id="party-room-select">
+            <option value="">ไม่จองห้องพัก</option>
+          </select>
+        </label>
+        <p class="room-booking-note" id="room-booking-note">เลือกห้องจากรายการห้องพักบนหน้านี้ แล้วกดส่งข้อมูลลงทะเบียนเพื่อยืนยันการจอง</p>
+
+        <label class="form-field payment-proof-field">
+          <span>อัปโหลดหลักฐานการชำระเงิน (ถ้ามี)</span>
+          <input type="file" name="paymentProof" accept="image/*,.pdf">
+        </label>
+
+        <div class="payment-total" id="payment-total">ยอดต้องชำระ: 0 บาท</div>
+      </form>
+    </section>
+
+    <section class="room-public-section" aria-label="ห้องพักสำหรับจอง">
+      <div class="registration-list-header">
+        <div>
+          <p class="section-kicker">Room Booking</p>
+          <h2>ห้องพักสำหรับจอง</h2>
+        </div>
+      </div>
+      <div class="room-public-grid" id="room-public-list">
+        รอแอดมินเพิ่มข้อมูลห้องพัก
+      </div>
+    </section>
+
+    <div class="form-actions registration-submit-actions">
+      <button class="button button--primary" type="submit" id="party-submit-button" form="party-registration">ส่งข้อมูลลงทะเบียน</button>
+      <a class="button button--ghost" href="index.html">กลับหน้าแรก</a>
+    </div>
+    <p class="form-status registration-submit-status" id="form-status" role="status" aria-live="polite"></p>
+
+    <div class="room-image-lightbox" id="room-image-lightbox" hidden aria-modal="true" role="dialog" aria-label="ดูภาพห้องพักขนาดใหญ่">
+      <button class="room-image-lightbox__close" type="button" id="room-image-lightbox-close" aria-label="ปิดภาพขยาย">×</button>
+      <button class="room-image-lightbox__nav room-image-lightbox__nav--prev" type="button" id="room-image-lightbox-prev" aria-label="ดูภาพก่อนหน้า">‹</button>
+      <img id="room-image-lightbox-img" alt="ภาพห้องพักขนาดใหญ่">
+      <button class="room-image-lightbox__nav room-image-lightbox__nav--next" type="button" id="room-image-lightbox-next" aria-label="ดูภาพถัดไป">›</button>
+      <div class="room-image-lightbox__counter" id="room-image-lightbox-counter">1/1</div>
+    </div>
+
+    <section class="page-admin-panel" aria-label="จัดการผู้ร่วมงาน">
+      <div class="admin-login compact-admin-login">
+        <div>
+          <p class="section-kicker">Party Admin</p>
+          <h2>จัดการผู้ร่วมงาน</h2>
+          <p>ใส่รหัส Admin เพื่อแก้ไข ลบ หรืออัปเดตสถานะการจ่ายเงินของผู้ร่วมงานในหน้านี้</p>
+        </div>
+        <label class="form-field">
+          <span>รหัสผ่าน Admin</span>
+          <input type="password" id="party-admin-code" autocomplete="off">
+        </label>
+        <button class="button button--primary" type="button" id="party-admin-unlock">ปลดล็อก</button>
+        <p class="form-status" id="party-admin-status" role="status" aria-live="polite"></p>
+      </div>
+      <div class="admin-registrations" id="party-admin-list" hidden>ยังไม่มีข้อมูลผู้ร่วมงาน</div>
+
+    </section>
+  </main>
+
+  <script src="register.js"></script>
+</body>
+
+</html>

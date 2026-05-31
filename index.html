@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>นักเรียนนายสิบทหารม้า 30/40</title>
+  <meta name="description"
+    content="เว็บไซต์ทหารม้า รุ่น 30/40 พื้นที่แห่งความทรงจำ เกียรติ ศักดิ์ศรี และสายสัมพันธ์ของเพื่อนร่วมรุ่น">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <main class="home">
+    <section class="hero" aria-label="หน้าแรกทหารม้า รุ่น 30/40">
+      <img class="hero__image" src="assets/cavalry-hero-tank-horse.png"
+        alt="ฉากลานฝึกทหารม้าโทนฟ้าหม่น มีรถถังและม้า ไม่มีบุคคล">
+      <div class="hero__shade"></div>
+      <header class="site-header" aria-label="หัวเว็บไซต์">
+        <a class="brand" href="index.html">
+          <img class="brand__logo" src="assets/Logo3040.png" alt="โลโก้ทหารม้า รุ่น 30/40">
+          <span class="brand__text">นนส.เหล่า ม.30/40</span>
+        </a>
+        <nav class="nav" aria-label="เมนูหลัก">
+          <a class="is-active" href="index.html">หน้าแรก</a>
+          <a href="register.html">งานเลี้ยงสังสรรค์ ปี 69</a>
+          <a href="directory.html">ทำเนียบปัจจุบัน</a>
+          <a href="#">กิจกรรม</a>
+          <a href="committee.html">คณะกรรมการรุ่น</a>
+          <a href="room-admin.html">จัดการห้องพัก</a>
+        </nav>
+      </header>
+
+      <div class="hero__content">
+        <p class="eyebrow">งานเลี้ยงสังสรรค์ประจำปี 2569</p>
+
+        <section class="event-spotlight" id="annual-party" aria-label="จุดเด่นงานเลี้ยงประจำปี">
+          <h2>นักเรียนนายสิบทหารม้า 30/40</h2>
+          <p> ขอเชิญเพื่อนๆ ทหารม้า 30/40 ทุกท่าน ร่วมงานเลี้ยงสังสรรค์ประจำปี 2569 เพื่อพบปะสังสรรค์
+            แลกเปลี่ยนประสบการณ์ โดยในปีนี้ ทภ.2
+            เป็นเจ้าภาพกำหนดจัดงาน ในวันที่.............69 ณ .............แล้วพบกันครับ</p>
+        </section>
+        <br>
+        <div class="actions" aria-label="ลิงก์สำคัญ">
+          <a class="button button--primary" href="#">สาส์นเชิญร่วมงานจากเจ้าภาพ ทภ.2</a>
+          <a class="button button--ghost" href="directory.html">ดูทำเนียบรุ่น</a>
+        </div>
+      </div>
+
+      <aside class="hero__note" aria-label="คำขวัญ">
+        <span>รวดเร็ว</span>
+        <span>รุนแรง</span>
+        <span>เด็ดขาด</span>
+      </aside>
+    </section>
+
+    <section class="registration-list-section" aria-label="รายชื่อผู้ลงทะเบียนงานเลี้ยง">
+      <div class="registration-list-header">
+        <div>
+          <p class="section-kicker">Annual Party Registration</p><br>
+          <h2>รายชื่อผู้ลงทะเบียนเข้าร่วมงาน</h2>
+        </div>
+      </div>
+
+      <div class="registration-summary" id="registration-summary">
+        สรุปผู้เข้าร่วมงานทั้งหมด: 0 คน
+      </div>
+
+      <div class="registration-table-wrap">
+        <table class="registration-table">
+          <thead>
+            <tr>
+              <th>ยศ ชื่อ นามสกุล</th>
+              <th>จำนวน</th>
+              <th>หมายเลขห้องพัก</th>
+            </tr>
+          </thead>
+          <tbody id="registration-list">
+            <tr>
+              <td colspan="3">ยังไม่มีข้อมูลผู้ลงทะเบียน</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="index.js"></script>
+</body>
+
+
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบ Admin | นนส.เหล่า ม.30/40</title>
+  <meta name="description" content="ระบบ Admin สำหรับจัดการงานเลี้ยงและทำเนียบรุ่น 30/40">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="registration-page admin-page">
+  <main class="registration-shell">
+    <img class="registration-bg" src="assets/cavalry-hero-tank-horse.png" alt="ฉากทหารม้าโทนฟ้าหม่น">
+    <div class="registration-shade"></div>
+
+    <header class="site-header registration-header" aria-label="หัวเว็บไซต์">
+      <a class="brand" href="index.html">
+        <img class="brand__logo" src="assets/Logo3040.png" alt="โลโก้ทหารม้า รุ่น 30/40">
+        <span class="brand__text">นนส.เหล่า ม.30/40</span>
+      </a>
+      <nav class="nav" aria-label="เมนูหลัก">
+        <a href="index.html">หน้าแรก</a>
+        <a href="register.html">งานเลี้ยงสังสรรค์ ปี 69</a>
+        <a href="directory.html">ทำเนียบปัจจุบัน</a>
+        <a href="#">กิจกรรม</a>
+        <a href="committee.html">คณะกรรมการรุ่น</a>
+        <a href="room-admin.html">จัดการห้องพัก</a>
+      </nav>
+    </header>
+
+    <section class="admin-panel admin-page-panel" aria-label="ระบบ Admin">
+      <div class="admin-login" id="admin-login">
+        <div>
+          <p class="section-kicker">Admin Console</p>
+          <h2>ระบบ Admin</h2>
+          <p>จัดการผู้ร่วมงาน สถานะชำระเงิน ค่าใช้จ่าย และสมาชิกทำเนียบรุ่นทั้งหมด</p>
+        </div>
+        <label class="form-field admin-code-field">
+          <span>รหัสผ่าน Admin</span>
+          <input type="password" id="admin-code" autocomplete="off">
+        </label>
+        <button class="button button--primary" type="button" id="admin-unlock">เข้าสู่ระบบ</button>
+        <p class="form-status" id="admin-status" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="admin-content" id="admin-content" hidden>
+        <section class="admin-section">
+          <div class="admin-section-heading">
+            <div>
+              <p class="section-kicker">Party Settings</p>
+              <h3>ตั้งค่าค่าใช้จ่ายงานเลี้ยง</h3>
+            </div>
+          </div>
+          <form class="admin-settings" id="admin-settings">
+            <label class="form-field">
+              <span>ค่างานเลี้ยงต่อครอบครัว (บาท)</span>
+              <input type="number" name="eventFee" min="0" value="0" required>
+            </label>
+            <label class="form-field">
+              <span>ค่าเสื้อต่อตัว ตั้งแต่ตัวที่ 2 (บาท)</span>
+              <input type="number" name="shirtPrice" min="0" value="0" required>
+            </label>
+            <button class="button button--primary" type="submit">บันทึกราคา</button>
+          </form>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-heading">
+            <div>
+              <p class="section-kicker">Party Guests</p>
+              <h3>เพิ่มผู้ร่วมงาน</h3>
+            </div>
+          </div>
+          <form class="admin-add-form" id="admin-party-form">
+            <div class="form-grid directory-form-grid">
+              <label class="form-field"><span>ชื่อ</span><input type="text" name="firstName" required></label>
+              <label class="form-field"><span>นามสกุล</span><input type="text" name="lastName" required></label>
+              <label class="form-field"><span>เบอร์โทร</span><input type="tel" name="phone" inputmode="tel"
+                  required></label>
+              <label class="form-field"><span>สังกัด</span><input type="text" name="unit" required></label>
+              <label class="form-field"><span>จำนวนผู้เข้าร่วมงาน</span><input type="number" name="guestCount" min="1"
+                  value="1" required></label>
+              <label class="form-field"><span>จำนวนเสื้อ</span><input type="number" name="shirtCount" min="0" value="0"
+                  required></label>
+              <label class="form-field"><span>ไซส์เสื้อ</span><input type="text" name="shirtSizes"
+                  placeholder="เช่น L, XL"></label>
+              <label class="form-field">
+                <span>สถานะชำระเงิน</span>
+                <select name="paymentStatus" required>
+                  <option value="ยังไม่ชำระ">ยังไม่ชำระ</option>
+                  <option value="รอตรวจสอบ">รอตรวจสอบ</option>
+                  <option value="ชำระแล้ว">ชำระแล้ว</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="button button--primary" type="submit" id="admin-party-submit">เพิ่มผู้ร่วมงาน</button>
+            </div>
+          </form>
+          <div class="admin-registrations" id="admin-registrations">ยังไม่มีข้อมูลผู้ลงทะเบียน</div>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-heading">
+            <div>
+              <p class="section-kicker">Directory Members</p>
+              <h3>จัดการสมาชิกทำเนียบรุ่น</h3>
+            </div>
+          </div>
+          <form class="admin-add-form" id="admin-directory-form">
+            <div class="form-grid directory-form-grid">
+              <label class="form-field"><span>ยศ (ปัจจุบัน)</span><input type="text" name="rank" required></label>
+              <label class="form-field"><span>ชื่อ (ปัจจุบัน)</span><input type="text" name="currentFirstName"
+                  required></label>
+              <label class="form-field"><span>ชื่อ (เดิม)</span><input type="text" name="oldFirstName"></label>
+              <label class="form-field"><span>นามสกุล (ปัจจุบัน)</span><input type="text" name="currentLastName"
+                  required></label>
+              <label class="form-field"><span>นามสกุล (เดิม)</span><input type="text" name="oldLastName"></label>
+              <label class="form-field"><span>สังกัด</span><input type="text" name="unit" required></label>
+              <label class="form-field"><span>เบอร์โทร</span><input type="tel" name="phone" inputmode="tel"
+                  required></label>
+              <label class="form-field">
+                <span>กองร้อยที่</span>
+                <select name="company" required>
+                  <option value="1">กองร้อยที่ 1</option>
+                  <option value="2">กองร้อยที่ 2</option>
+                  <option value="3">กองร้อยที่ 3</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="button button--primary" type="submit" id="admin-directory-submit">เพิ่มสมาชิกทำเนียบ</button>
+            </div>
+          </form>
+          <div class="admin-registrations" id="admin-directory-members">ยังไม่มีข้อมูลสมาชิก</div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+
+</html>
