@@ -9,6 +9,19 @@ const adminStatus = document.querySelector("#directory-admin-status");
 const directoryKey = "cavalry3040DirectoryMembers";
 const adminPin = "cavalry3040";
 
+const ensureNicknameField = () => {
+  if (directoryForm.elements.nickname) return;
+  const oldFirstNameInput = directoryForm.elements.oldFirstName;
+  const oldFirstNameField = oldFirstNameInput?.closest(".form-field");
+  if (!oldFirstNameField) return;
+  const nicknameField = document.createElement("label");
+  nicknameField.className = "form-field";
+  nicknameField.innerHTML = `<span>ชื่อเล่น</span><input type="text" name="nickname">`;
+  oldFirstNameField.insertAdjacentElement("afterend", nicknameField);
+};
+
+ensureNicknameField();
+
 const companies = ["1", "2", "3"];
 let activeCompany = "all";
 let adminUnlocked = false;
@@ -40,7 +53,7 @@ const resetEditMode = () => {
 const renderCompanyTable = (company, members) => {
   const rows = members.filter((member) => member.company === company);
   const actionHeader = adminUnlocked ? "<th>จัดการ</th>" : "";
-  const colspan = adminUnlocked ? 9 : 8;
+  const colspan = adminUnlocked ? 10 : 9;
   const emptyRow = `
     <tr>
       <td colspan="${colspan}">ยังไม่มีข้อมูลกองร้อยที่ ${company}</td>
@@ -60,6 +73,7 @@ const renderCompanyTable = (company, members) => {
               <th>ยศ</th>
               <th>ชื่อปัจจุบัน</th>
               <th>ชื่อเดิม</th>
+              <th>ชื่อเล่น</th>
               <th>นามสกุลปัจจุบัน</th>
               <th>นามสกุลเดิม</th>
               <th>สังกัด</th>
@@ -74,6 +88,7 @@ const renderCompanyTable = (company, members) => {
                 <td>${escapeHtml(member.rank)}</td>
                 <td>${escapeHtml(member.currentFirstName)}</td>
                 <td>${escapeHtml(member.oldFirstName) || "-"}</td>
+                <td>${escapeHtml(member.nickname) || "-"}</td>
                 <td>${escapeHtml(member.currentLastName)}</td>
                 <td>${escapeHtml(member.oldLastName) || "-"}</td>
                 <td>${escapeHtml(member.unit)}</td>
@@ -118,6 +133,7 @@ directoryForm.addEventListener("submit", (event) => {
     rank: formData.get("rank").trim(),
     currentFirstName,
     oldFirstName: formData.get("oldFirstName").trim(),
+    nickname: String(formData.get("nickname") || "").trim(),
     currentLastName,
     oldLastName: formData.get("oldLastName").trim(),
     unit: formData.get("unit").trim(),
@@ -171,6 +187,7 @@ directoryTables.addEventListener("click", (event) => {
     directoryForm.elements.rank.value = member.rank || "";
     directoryForm.elements.currentFirstName.value = member.currentFirstName || "";
     directoryForm.elements.oldFirstName.value = member.oldFirstName || "";
+    directoryForm.elements.nickname.value = member.nickname || "";
     directoryForm.elements.currentLastName.value = member.currentLastName || "";
     directoryForm.elements.oldLastName.value = member.oldLastName || "";
     directoryForm.elements.unit.value = member.unit || "";
