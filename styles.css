@@ -716,6 +716,72 @@ h1 {
   margin-top: 22px;
 }
 
+
+
+.souvenir-preview,
+.souvenir-public-image {
+  overflow: hidden;
+  border: 1px solid rgba(239, 208, 138, 0.28);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--muted);
+  background: rgba(13, 27, 35, 0.52);
+  font-weight: 800;
+}
+
+.souvenir-preview img,
+.souvenir-public-image img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.souvenir-preview span {
+  display: block;
+  margin-top: 8px;
+}
+
+.party-price-detail {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(239, 208, 138, 0.28);
+  border-radius: 8px;
+  color: #fff7dd;
+  background: rgba(13, 27, 35, 0.52);
+  font-weight: 800;
+}
+
+.party-price-detail span {
+  display: block;
+  line-height: 1.55;
+}
+
+.checkline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.checkline input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold-bright);
+}
+
+.admin-checkbox-field .checkline {
+  border: 1px solid rgba(239, 208, 138, 0.28);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(13, 27, 35, 0.48);
+}
+
 .payment-total {
   margin-top: 18px;
   padding: 14px 18px;
@@ -1796,4 +1862,297 @@ body.has-lightbox {
   min-height: 42px;
   color: var(--muted);
   font-weight: 800;
+}
+
+
+/* Global responsive polish */
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.form-field input,
+.form-field select,
+.admin-registration-card select,
+.admin-room-booking-control select,
+.room-assign-control select {
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .site-header,
+  .registration-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .brand {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .nav {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 10px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .nav a {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    padding: 9px 12px;
+    border: 1px solid rgba(239, 208, 138, 0.22);
+    border-radius: 999px;
+    background: rgba(13, 27, 35, 0.42);
+    white-space: nowrap;
+  }
+
+  .nav a.is-active {
+    padding: 9px 14px;
+  }
+
+  .event-spotlight {
+    width: min(760px, 100%);
+  }
+
+  .admin-login,
+  .compact-admin-login,
+  .admin-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-settings .button,
+  .admin-login .button,
+  .compact-admin-login .button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .registration-hero,
+  .directory-hero,
+  .committee-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-form,
+  .admin-add-form,
+  .admin-content,
+  .admin-login,
+  .committee-public-card {
+    padding: 16px;
+  }
+
+  .admin-registration-card,
+  .committee-member-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-registration-actions,
+  .form-actions,
+  .actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .admin-registration-actions .button,
+  .admin-registration-actions button,
+  .admin-registration-actions select,
+  .form-actions .button,
+  .actions .button {
+    width: 100%;
+  }
+
+  .room-public-grid,
+  .committee-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-public-card,
+  .room-admin-card,
+  .room-summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .room-admin-card .admin-registration-actions {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero,
+  .registration-shell {
+    padding: 14px;
+  }
+
+  .site-header {
+    align-items: stretch;
+  }
+
+  .brand {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .brand__logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .brand__text {
+    max-width: none;
+    white-space: normal;
+  }
+
+  .nav {
+    display: flex;
+    font-size: 0.88rem;
+  }
+
+  .hero__content {
+    padding: 48px 0 34px;
+  }
+
+  h1,
+  .registration-copy h1 {
+    font-size: clamp(2.6rem, 16vw, 4.5rem);
+  }
+
+  .registration-list-header,
+  .admin-section-heading,
+  .company-directory__heading,
+  .room-summary-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .registration-summary,
+  .payment-total,
+  .party-price-detail {
+    font-size: 0.98rem;
+  }
+
+  .registration-table {
+    min-width: 720px;
+  }
+
+  .directory-table {
+    min-width: 980px;
+  }
+
+  .registration-table th,
+  .registration-table td {
+    padding: 9px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .form-grid,
+  .directory-form-grid,
+  .committee-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .button,
+  button,
+  select,
+  input {
+    max-width: 100%;
+  }
+
+  .shirt-sizes label,
+  .checkline,
+  .form-actions .button,
+  .actions .button,
+  .directory-filter-button,
+  .compact-action,
+  .admin-delete-button {
+    width: 100%;
+  }
+
+  .shirt-sizes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-actions {
+    width: 100%;
+  }
+
+  .inline-actions .button,
+  .inline-actions button {
+    width: 100%;
+  }
+
+  .room-public-body .button,
+  .room-assign-control .button,
+  .room-booked-list span {
+    width: 100%;
+  }
+
+  .room-booked-list span {
+    justify-content: space-between;
+  }
+
+  .room-image-lightbox {
+    padding: 12px;
+  }
+
+  .room-image-lightbox img {
+    max-width: 94vw;
+    max-height: 78vh;
+  }
+
+  .room-image-lightbox__close {
+    top: 10px;
+    right: 10px;
+  }
+
+  .room-image-lightbox__nav--prev {
+    left: 10px;
+  }
+
+  .room-image-lightbox__nav--next {
+    right: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand__logo {
+    width: 58px;
+    height: 58px;
+  }
+
+  .brand__text {
+    font-size: 0.95rem;
+  }
+
+  .nav {
+    font-size: 0.82rem;
+  }
+
+  .eyebrow {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  .shirt-sizes {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-panel,
+  .page-admin-panel,
+  .registration-list-section,
+  .directory-list-section {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }

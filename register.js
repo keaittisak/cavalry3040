@@ -1,6 +1,10 @@
 const form = document.querySelector("#party-registration");
 const statusText = document.querySelector("#form-status");
 const totalText = document.querySelector("#payment-total");
+const priceDetail = document.querySelector("#party-price-detail");
+const souvenirField = document.querySelector("#souvenir-field");
+const souvenirLabel = document.querySelector("#souvenir-label");
+const souvenirPublicImage = document.querySelector("#souvenir-public-image");
 const submitButton = document.querySelector("#party-submit-button");
 const roomSelect = document.querySelector("#party-room-select");
 const roomBookingNote = document.querySelector("#room-booking-note");
@@ -27,7 +31,7 @@ let lightboxImages = [];
 let lightboxIndex = 0;
 
 const createId = (prefix) => globalThis.crypto?.randomUUID?.() || prefix + "-" + Date.now();
-const getSettings = () => JSON.parse(localStorage.getItem(settingsKey) || "{\"eventFee\":0,\"shirtPrice\":0}");
+const getSettings = () => ({ eventFee: 0, shirtPrice: 0, souvenirPrice: 0, souvenirImage: null, ...JSON.parse(localStorage.getItem(settingsKey) || "{}") });
 const getRegistrations = () => JSON.parse(localStorage.getItem(storageKey) || "[]").map((item, index) => ({
   ...item,
   id: item.id || "legacy-party-" + index + "-" + (item.registeredAt || index)
@@ -55,11 +59,18 @@ const getDisplayName = (item, fallback = "รายการนี้") => {
   return displayName || fallback;
 };
 
-const calculateTotal = (shirtCount, settings = getSettings()) => {
+const getPriceParts = (shirtCount, souvenirReserved = false, settings = getSettings()) => {
   const shirts = Number(shirtCount || 0);
   const paidShirts = Math.max(shirts - 1, 0);
-  return Number(settings.eventFee || 0) + paidShirts * Number(settings.shirtPrice || 0);
+  const eventFee = Number(settings.eventFee || 0);
+  const shirtPrice = Number(settings.shirtPrice || 0);
+  const souvenirPrice = Number(settings.souvenirPrice || 0);
+  const extraShirtTotal = paidShirts * shirtPrice;
+  const souvenirTotal = souvenirReserved && souvenirPrice > 0 ? souvenirPrice : 0;
+  return { eventFee, shirtPrice, paidShirts, extraShirtTotal, souvenirPrice, souvenirTotal, total: eventFee + extraShirtTotal + souvenirTotal };
 };
+
+const calculateTotal = (shirtCount, settings = getSettings(), souvenirReserved = false) => getPriceParts(shirtCount, souvenirReserved, settings).total;
 
 const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -217,8 +228,28 @@ const renderPublicRooms = () => {
 
 const updateTotalPreview = () => {
   const formData = new FormData(form);
-  const total = calculateTotal(formData.get("shirtCount"), getSettings());
-  totalText.textContent = `ยอดต้องชำระ: ${currency.format(total)} บาท`;
+  const settings = getSettings();
+  const souvenirPrice = Number(settings.souvenirPrice || 0);
+  const souvenirReserved = formData.get("souvenirReserved") === "yes" && souvenirPrice > 0;
+  const parts = getPriceParts(formData.get("shirtCount"), souvenirReserved, settings);
+
+  if (souvenirField) souvenirField.hidden = souvenirPrice <= 0;
+  if (souvenirLabel) souvenirLabel.textContent = "จองของที่ระลึก ราคา " + currency.format(souvenirPrice) + " บาท";
+  if (souvenirPublicImage) {
+    const image = settings.souvenirImage;
+    souvenirPublicImage.hidden = !(souvenirPrice > 0 && image?.dataUrl);
+    souvenirPublicImage.innerHTML = image?.dataUrl ? `<img src="${image.dataUrl}" alt="รูปของที่ระลึก">` : "";
+  }
+  if (priceDetail) {
+    const rows = [
+      `<span>ค่างานเลี้ยงรวมเสื้อตัวที่ 1: ${currency.format(parts.eventFee)} บาท</span>`,
+      `<span>เสื้อตัวที่ 2 ขึ้นไป: ${currency.format(parts.shirtPrice)} บาท/ตัว (${parts.paidShirts} ตัว = ${currency.format(parts.extraShirtTotal)} บาท)</span>`
+    ];
+    if (souvenirPrice > 0) rows.push(`<span>ของที่ระลึก: ${currency.format(souvenirPrice)} บาท${souvenirReserved ? " (จองแล้ว)" : ""}</span>`);
+    priceDetail.innerHTML = rows.join("");
+  }
+
+  totalText.textContent = `ยอดต้องชำระ: ${currency.format(parts.total)} บาท`;
   updateRoomSelect();
   renderPublicRooms();
 };
@@ -250,12 +281,13 @@ const renderAdminList = () => {
     const room = rooms.find((entry) => entry.id === item.roomId);
     const shirtSizes = Array.isArray(item.shirtSizes) ? item.shirtSizes.map(escapeHtml).join(", ") : "-";
     const paymentStatus = item.paymentStatus || "ยังไม่ชำระ";
+    const souvenirText = item.souvenirReserved ? " • ของที่ระลึก: จอง" : "";
     return `
       <article class="admin-registration-card admin-registration-card--detailed">
         <div class="admin-registration-detail">
           <strong>${escapeHtml(getDisplayName(item))}</strong>
           <span>สังกัด: ${escapeHtml(item.unit || "-")} • เบอร์โทร: ${escapeHtml(item.phone || "-")}</span>
-          <span>จำนวนเข้าร่วม: ${escapeHtml(item.guestCount || 0)} คน • เสื้อ: ${escapeHtml(item.shirtCount || 0)} ตัว • ไซส์: ${shirtSizes}</span>
+          <span>จำนวนเข้าร่วม: ${escapeHtml(item.guestCount || 0)} คน • เสื้อ: ${escapeHtml(item.shirtCount || 0)} ตัว • ไซส์: ${shirtSizes}${souvenirText}</span>
           <span>ยอดต้องชำระ: ${currency.format(item.totalDue || 0)} บาท • สถานะชำระเงิน: ${escapeHtml(paymentStatus)} • ${renderPaymentProof(item.paymentProof)}</span>
           <span>ห้องพัก: ${escapeHtml(getRoomLabel(room))} • สถานะห้องพัก: ${escapeHtml(getRoomStatus(room, items))}</span>
         </div>
@@ -341,9 +373,11 @@ form.addEventListener("submit", async (event) => {
     shirtCount: formData.get("shirtCount"),
     shirtSizes: selectedSizes,
     roomId: selectedRoomId,
+    souvenirReserved: formData.get("souvenirReserved") === "yes" && Number(settings.souvenirPrice || 0) > 0,
     eventFee: Number(settings.eventFee || 0),
     shirtPrice: Number(settings.shirtPrice || 0),
-    totalDue: calculateTotal(formData.get("shirtCount"), settings),
+    souvenirPrice: Number(settings.souvenirPrice || 0),
+    totalDue: calculateTotal(formData.get("shirtCount"), settings, formData.get("souvenirReserved") === "yes"),
     paymentStatus: current?.paymentStatus || (hasProofFile ? "รอตรวจสอบ" : "ยังไม่ชำระ"),
     paymentProof: hasProofFile ? { name: proofFile.name, type: proofFile.type, dataUrl: proofDataUrl } : (current?.paymentProof || null),
     registeredAt: current?.registeredAt || new Date().toISOString(),
@@ -414,6 +448,7 @@ adminList.addEventListener("click", (event) => {
     form.elements.shirtCount.value = item.shirtCount || 0;
     setSizes(item.shirtSizes || []);
     roomSelect.value = item.roomId || "";
+    if (form.elements.souvenirReserved) form.elements.souvenirReserved.checked = Boolean(item.souvenirReserved);
     submitButton.textContent = "บันทึกการแก้ไข";
     statusText.textContent = "กำลังแก้ไขข้อมูลของ " + getDisplayName(item);
     statusText.classList.remove("is-error");
