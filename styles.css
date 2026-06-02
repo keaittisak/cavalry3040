@@ -2156,3 +2156,83 @@ canvas {
     padding-right: 12px;
   }
 }
+
+.room-group-heading {
+  grid-column: 1 / -1;
+  margin: 8px 0 2px;
+  padding: 10px 14px;
+  border-left: 4px solid var(--gold);
+  border-radius: 6px;
+  background: rgba(229, 190, 111, 0.12);
+  color: var(--cream);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.room-group {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid rgba(239, 208, 138, 0.22);
+  border-radius: 8px;
+  background: rgba(9, 27, 36, 0.35);
+}
+
+.room-group.is-large {
+  border-color: rgba(229, 190, 111, 0.46);
+  background: rgba(99, 75, 24, 0.18);
+}
+
+.room-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.room-group .room-group-heading {
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .room-group-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.room-admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.room-admin-form-grid .room-admin-form {
+  height: 100%;
+}
+
+.room-admin-form--family {
+  border-color: rgba(229, 190, 111, 0.42);
+  background: rgba(99, 75, 24, 0.16);
+}
+
+.room-form-block-heading {
+  margin-bottom: 14px;
+}
+
+.room-form-block-heading h4 {
+  margin: 4px 0 0;
+  color: var(--cream);
+  font-size: 1.2rem;
+}
+
+.room-admin-link-actions {
+  margin-top: 16px;
+}
+
+@media (max-width: 980px) {
+  .room-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

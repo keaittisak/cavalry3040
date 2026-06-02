@@ -29,15 +29,35 @@ let editingPartyId = "";
 let adminUnlocked = false;
 let lightboxImages = [];
 let lightboxIndex = 0;
+let siteData = { settings: {}, rooms: [], registrations: [] };
+
+const readLocalJson = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (error) {
+    console.warn("Invalid localStorage data", key, error);
+    return fallback;
+  }
+};
+const loadSiteData = async () => {
+  try {
+    const response = await fetch("site-data.json", { cache: "no-store" });
+    if (!response.ok) return;
+    siteData = { ...siteData, ...(await response.json()) };
+  } catch (error) {
+    console.warn("Cannot load site-data.json", error);
+  }
+};
 
 const createId = (prefix) => globalThis.crypto?.randomUUID?.() || prefix + "-" + Date.now();
-const getSettings = () => ({ eventFee: 0, shirtPrice: 0, souvenirPrice: 0, souvenirImage: null, ...JSON.parse(localStorage.getItem(settingsKey) || "{}") });
-const getRegistrations = () => JSON.parse(localStorage.getItem(storageKey) || "[]").map((item, index) => ({
+const getSettings = () => ({ eventFee: 0, shirtPrice: 0, souvenirPrice: 0, souvenirImage: null, ...(siteData.settings || {}), ...readLocalJson(settingsKey, {}) });
+const getRegistrations = () => readLocalJson(storageKey, siteData.registrations || []).map((item, index) => ({
   ...item,
   id: item.id || "legacy-party-" + index + "-" + (item.registeredAt || index)
 }));
 const saveRegistrations = (items) => localStorage.setItem(storageKey, JSON.stringify(items));
-const getRooms = () => JSON.parse(localStorage.getItem(roomsKey) || "[]").map((room, index) => ({
+const getRooms = () => readLocalJson(roomsKey, siteData.rooms || []).map((room, index) => ({
   ...room,
   id: room.id || "legacy-room-" + index + "-" + (room.createdAt || index)
 }));
@@ -59,7 +79,7 @@ const getDisplayName = (item, fallback = "รายการนี้") => {
   return displayName || fallback;
 };
 
-const getPriceParts = (shirtCount, souvenirReserved = false, settings = getSettings()) => {
+const getPriceParts = (shirtCount, souvenirReserved = false, settings = getSettings(), roomPlan = {}) => {
   const shirts = Number(shirtCount || 0);
   const paidShirts = Math.max(shirts - 1, 0);
   const eventFee = Number(settings.eventFee || 0);
@@ -67,14 +87,36 @@ const getPriceParts = (shirtCount, souvenirReserved = false, settings = getSetti
   const souvenirPrice = Number(settings.souvenirPrice || 0);
   const extraShirtTotal = paidShirts * shirtPrice;
   const souvenirTotal = souvenirReserved && souvenirPrice > 0 ? souvenirPrice : 0;
-  return { eventFee, shirtPrice, paidShirts, extraShirtTotal, souvenirPrice, souvenirTotal, total: eventFee + extraShirtTotal + souvenirTotal };
+  const largeRoomCharge = Number(roomPlan.largeRoomCharge || 0);
+  return { eventFee, shirtPrice, paidShirts, extraShirtTotal, souvenirPrice, souvenirTotal, largeRoomCharge, total: eventFee + extraShirtTotal + souvenirTotal + largeRoomCharge };
 };
 
-const calculateTotal = (shirtCount, settings = getSettings(), souvenirReserved = false) => getPriceParts(shirtCount, souvenirReserved, settings).total;
+const calculateTotal = (shirtCount, settings = getSettings(), souvenirReserved = false, roomPlan = {}) => getPriceParts(shirtCount, souvenirReserved, settings, roomPlan).total;
 
-const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+const readFileAsDataUrl = (file, maxSize = 1280, quality = 0.82) => new Promise((resolve, reject) => {
   const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
+  reader.onload = () => {
+    if (!file?.type?.startsWith("image/")) {
+      resolve(reader.result);
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(maxSize / image.width, maxSize / image.height, 1);
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, width, height);
+      const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      resolve(outputType === "image/png" ? canvas.toDataURL(outputType) : canvas.toDataURL(outputType, quality));
+    };
+    image.onerror = reject;
+    image.src = reader.result;
+  };
   reader.onerror = reject;
   reader.readAsDataURL(file);
 });
@@ -84,13 +126,38 @@ const parsePositiveNumber = (value) => {
   return Number(normalized) || 0;
 };
 
-const getRoomCapacity = (room) => parsePositiveNumber(room?.maxGuests ?? room?.guestCount ?? room?.capacity);
+const getRoomCapacity = (room) => parsePositiveNumber(room?.maxGuests ?? room?.guestCount ?? room?.capacity) || 3;
+const isLargeRoom = (room) => getRoomCapacity(room) > 3;
 const getGuestCount = (value) => parsePositiveNumber(value);
 const getRequestedGuests = () => Math.max(getGuestCount(form.elements.guestCount?.value), 1);
+const getRoomBookings = (item) => {
+  if (Array.isArray(item?.roomBookings)) return item.roomBookings.filter((booking) => booking?.roomId);
+  if (item?.roomId) return [{ roomId: item.roomId, guests: getGuestCount(item.roomGuestCount || item.guestCount) }];
+  return [];
+};
+const getPendingRoomGuests = (item) => getGuestCount(item?.pendingRoomGuests);
+const getRoomPlan = (bookings = [], pendingGuests = 0) => {
+  const rooms = getRooms();
+  const extraRoomCount = pendingGuests > 0 ? Math.ceil(pendingGuests / 3) : Math.max(bookings.length - 1, 0);
+  const largeRoomCharge = bookings.reduce((sum, booking) => {
+    const room = rooms.find((item) => item.id === booking.roomId);
+    return sum + (isLargeRoom(room) ? parsePositiveNumber(room.largeRoomPrice) : 0);
+  }, 0);
+  return { extraRoomCount, largeRoomCharge };
+};
+const getRoomText = (item, rooms = getRooms()) => {
+  const bookings = getRoomBookings(item);
+  const text = bookings.map((booking) => {
+    const room = rooms.find((entry) => entry.id === booking.roomId);
+    return (room ? room.roomNumber : "-") + " (" + getGuestCount(booking.guests) + " คน)";
+  }).join(", ");
+  const pending = getPendingRoomGuests(item);
+  return [text || "-", pending ? "ค้างจัด " + pending + " คน" : ""].filter(Boolean).join(" • ");
+};
 
 const getRoomUsage = (roomId, registrations = getRegistrations(), excludedRegistrationId = "") => registrations
-  .filter((item) => item.roomId === roomId && item.id !== excludedRegistrationId)
-  .reduce((sum, item) => sum + getGuestCount(item.guestCount), 0);
+  .filter((item) => item.id !== excludedRegistrationId)
+  .reduce((sum, item) => sum + getRoomBookings(item).filter((booking) => booking.roomId === roomId).reduce((bookingSum, booking) => bookingSum + getGuestCount(booking.guests), 0), 0);
 
 const getRoomLabel = (room) => room ? "ห้อง " + room.roomNumber + " - " + room.roomName : "-";
 const getRoomVacancy = (room, registrations = getRegistrations(), excludedRegistrationId = "") => {
@@ -169,19 +236,28 @@ const updateRoomSelect = () => {
   const currentRoomId = roomSelect.value;
 
   if (rooms.length === 0) {
-    roomSelect.innerHTML = "<option value=\"\">ไม่จองห้องพัก</option>";
+    roomSelect.innerHTML = '<option value="">ไม่จองห้องพัก</option>';
     roomBookingNote.textContent = "ยังไม่มีข้อมูลห้องพักจากแอดมิน";
     return;
   }
 
-  roomSelect.innerHTML = "<option value=\"\">ไม่จองห้องพัก</option>" + rooms.map((room) => {
-    const used = getRoomUsage(room.id, registrations, editingPartyId);
-    const maxGuests = getRoomCapacity(room);
-    const remaining = Math.max(maxGuests - used, 0);
-    const full = maxGuests > 0 && remaining <= 0;
-    const selected = currentRoomId === room.id ? "selected" : "";
-    return `<option value="${room.id}" ${selected} ${full && !selected ? "disabled" : ""}>${escapeHtml(getRoomLabel(room))} (ว่าง ${remaining} คน)</option>`;
-  }).join("");
+  const groupedSelectRooms = [
+    { title: "ห้องพักปกติ", rooms: rooms.filter((room) => !isLargeRoom(room)) },
+    { title: "ห้องพักครอบครัว", rooms: rooms.filter((room) => isLargeRoom(room)) }
+  ].filter((group) => group.rooms.length > 0);
+
+  roomSelect.innerHTML = '<option value="">ไม่จองห้องพัก</option>' + groupedSelectRooms.map((group) => `
+    <optgroup label="${escapeHtml(group.title)}">
+      ${group.rooms.map((room) => {
+        const used = getRoomUsage(room.id, registrations, editingPartyId);
+        const maxGuests = getRoomCapacity(room);
+        const remaining = Math.max(maxGuests - used, 0);
+        const full = maxGuests > 0 && remaining <= 0;
+        const selected = currentRoomId === room.id ? "selected" : "";
+        return `<option value="${room.id}" ${selected} ${full && !selected ? "disabled" : ""}>${escapeHtml(getRoomLabel(room))} (ว่าง ${remaining} คน)</option>`;
+      }).join("")}
+    </optgroup>
+  `).join("");
 
   const selectedRoom = rooms.find((room) => room.id === currentRoomId);
   roomBookingNote.textContent = selectedRoom
@@ -199,31 +275,41 @@ const renderPublicRooms = () => {
     return;
   }
 
-  publicRoomList.innerHTML = rooms.map((room) => {
-    const used = getRoomUsage(room.id, registrations, editingPartyId);
-    const maxGuests = getRoomCapacity(room);
-    const remaining = Math.max(maxGuests - used, 0);
-    const requestedGuests = getRequestedGuests();
-    const full = maxGuests > 0 && remaining <= 0;
-    const hasEnoughSpace = maxGuests === 0 || remaining >= requestedGuests;
-    const selected = roomSelect.value === room.id;
-    const disabled = !selected && (full || !hasEnoughSpace);
-    const image = renderRoomImages(room, room.roomName);
-    const buttonText = selected ? "เลือกห้องนี้แล้ว" : full ? "ห้องเต็ม" : !hasEnoughSpace ? "ว่างไม่พอ" : "เลือกจองห้องนี้";
-    return `
-      <article class="room-public-card ${selected ? "is-selected" : ""}">
-        <div class="room-public-image">${image}</div>
-        <div class="room-public-body">
-          <div class="room-summary-heading">
-            <strong>${escapeHtml(getRoomLabel(room))}</strong>
-            <span>ว่าง ${remaining} คน</span>
-          </div>
-          <p>${escapeHtml(getBedType(room))} • รองรับ ${escapeHtml(maxGuests || room.maxGuests || "-")} คน • จองแล้ว ${used} คน</p>
-          <button class="button ${selected ? "button--primary" : "button--ghost"} compact-action" type="button" data-book-room="${room.id}" ${disabled ? "disabled" : ""}>${buttonText}</button>
-        </div>
-      </article>
-    `;
-  }).join("");
+  const groupedRooms = [
+    { title: "ห้องพักปกติ", rooms: rooms.filter((room) => !isLargeRoom(room)) },
+    { title: "ห้องพักครอบครัว", rooms: rooms.filter((room) => isLargeRoom(room)) }
+  ].filter((group) => group.rooms.length > 0);
+
+  publicRoomList.innerHTML = groupedRooms.map((group) => `
+    <section class="room-group ${group.rooms.some((room) => isLargeRoom(room)) ? "is-large" : "is-normal"}">
+      <div class="room-group-heading">${escapeHtml(group.title)}</div>
+      <div class="room-group-grid">
+        ${group.rooms.map((room) => {
+          const used = getRoomUsage(room.id, registrations, editingPartyId);
+          const maxGuests = getRoomCapacity(room);
+          const remaining = Math.max(maxGuests - used, 0);
+          const full = maxGuests > 0 && remaining <= 0;
+          const selected = roomSelect.value === room.id;
+          const disabled = !selected && full;
+          const image = renderRoomImages(room, room.roomName);
+          const buttonText = selected ? "เลือกห้องนี้แล้ว" : full ? "ห้องเต็ม" : "เลือกจองห้องนี้";
+          return `
+            <article class="room-public-card ${selected ? "is-selected" : ""}">
+              <div class="room-public-image">${image}</div>
+              <div class="room-public-body">
+                <div class="room-summary-heading">
+                  <strong>${escapeHtml(getRoomLabel(room))}</strong>
+                  <span>ว่าง ${remaining} คน</span>
+                </div>
+                <p>${escapeHtml(getBedType(room))}${isLargeRoom(room) ? ` • ${escapeHtml(room.bedroomCount || 0)} ห้องนอน • ค่าส่วนต่าง ${currency.format(room.largeRoomPrice || 0)} บาท` : ""} • รองรับ ${escapeHtml(maxGuests || room.maxGuests || "-")} คน • จองแล้ว ${used} คน</p>
+                <button class="button ${selected ? "button--primary" : "button--ghost"} compact-action" type="button" data-book-room="${room.id}" ${disabled ? "disabled" : ""}>${buttonText}</button>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `).join("");
 };
 
 const updateTotalPreview = () => {
@@ -231,7 +317,13 @@ const updateTotalPreview = () => {
   const settings = getSettings();
   const souvenirPrice = Number(settings.souvenirPrice || 0);
   const souvenirReserved = formData.get("souvenirReserved") === "yes" && souvenirPrice > 0;
-  const parts = getPriceParts(formData.get("shirtCount"), souvenirReserved, settings);
+  const selectedRoomId = String(formData.get("roomId") || "");
+  const guestCount = getGuestCount(formData.get("guestCount"));
+  const room = getRooms().find((item) => item.id === selectedRoomId);
+  const vacancy = selectedRoomId && room ? Math.max(getRoomVacancy(room, getRegistrations(), editingPartyId), 0) : 0;
+  const assignGuests = selectedRoomId && room ? Math.min(guestCount, getRoomCapacity(room), vacancy) : 0;
+  const pendingGuests = selectedRoomId ? Math.max(guestCount - assignGuests, 0) : 0;
+  const parts = getPriceParts(formData.get("shirtCount"), souvenirReserved, settings, getRoomPlan(assignGuests ? [{ roomId: selectedRoomId, guests: assignGuests }] : [], pendingGuests));
 
   if (souvenirField) souvenirField.hidden = souvenirPrice <= 0;
   if (souvenirLabel) souvenirLabel.textContent = "จองของที่ระลึก ราคา " + currency.format(souvenirPrice) + " บาท";
@@ -246,6 +338,7 @@ const updateTotalPreview = () => {
       `<span>เสื้อตัวที่ 2 ขึ้นไป: ${currency.format(parts.shirtPrice)} บาท/ตัว (${parts.paidShirts} ตัว = ${currency.format(parts.extraShirtTotal)} บาท)</span>`
     ];
     if (souvenirPrice > 0) rows.push(`<span>ของที่ระลึก: ${currency.format(souvenirPrice)} บาท${souvenirReserved ? " (จองแล้ว)" : ""}</span>`);
+    if (parts.largeRoomCharge > 0) rows.push(`<span>ค่าส่วนต่างห้องพักครอบครัว: ${currency.format(parts.largeRoomCharge)} บาท</span>`);
     priceDetail.innerHTML = rows.join("");
   }
 
@@ -278,7 +371,7 @@ const renderAdminList = () => {
   }
 
   adminList.innerHTML = items.map((item) => {
-    const room = rooms.find((entry) => entry.id === item.roomId);
+    const roomText = getRoomText(item, rooms);
     const shirtSizes = Array.isArray(item.shirtSizes) ? item.shirtSizes.map(escapeHtml).join(", ") : "-";
     const paymentStatus = item.paymentStatus || "ยังไม่ชำระ";
     const souvenirText = item.souvenirReserved ? " • ของที่ระลึก: จอง" : "";
@@ -289,7 +382,7 @@ const renderAdminList = () => {
           <span>สังกัด: ${escapeHtml(item.unit || "-")} • เบอร์โทร: ${escapeHtml(item.phone || "-")}</span>
           <span>จำนวนเข้าร่วม: ${escapeHtml(item.guestCount || 0)} คน • เสื้อ: ${escapeHtml(item.shirtCount || 0)} ตัว • ไซส์: ${shirtSizes}${souvenirText}</span>
           <span>ยอดต้องชำระ: ${currency.format(item.totalDue || 0)} บาท • สถานะชำระเงิน: ${escapeHtml(paymentStatus)} • ${renderPaymentProof(item.paymentProof)}</span>
-          <span>ห้องพัก: ${escapeHtml(getRoomLabel(room))} • สถานะห้องพัก: ${escapeHtml(getRoomStatus(room, items))}</span>
+          <span>ห้องพัก: ${escapeHtml(roomText)}${getPendingRoomGuests(item) ? " • สถานะ: ค้างจัดห้องพัก" : ""}</span>
         </div>
         <div class="admin-registration-actions">
           <select data-payment-status="${item.id}" aria-label="สถานะชำระเงินของ ${escapeHtml(getDisplayName(item))}">
@@ -324,8 +417,11 @@ form.addEventListener("submit", async (event) => {
 
   const hasProofFile = proofFile && proofFile.size > 0;
 
-  if (hasProofFile && proofFile.size > 2 * 1024 * 1024) {
-    statusText.textContent = "ไฟล์หลักฐานต้องมีขนาดไม่เกิน 2 MB";
+  const proofLimit = proofFile?.type?.startsWith("image/") ? 8 * 1024 * 1024 : 2 * 1024 * 1024;
+  if (hasProofFile && proofFile.size > proofLimit) {
+    statusText.textContent = proofFile.type.startsWith("image/")
+      ? "รูปหลักฐานต้องมีขนาดไม่เกิน 8 MB ก่อนย่อขนาด"
+      : "ไฟล์หลักฐานต้องมีขนาดไม่เกิน 2 MB";
     statusText.classList.add("is-error");
     return;
   }
@@ -343,20 +439,22 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  let roomBookings = [];
+  let pendingRoomGuests = current?.pendingRoomGuests || 0;
   if (selectedRoomId) {
     const room = getRooms().find((item) => item.id === selectedRoomId);
-    const used = getRoomUsage(selectedRoomId, existing, editingPartyId);
     if (!room) {
       statusText.textContent = "ไม่พบข้อมูลห้องพักที่เลือก กรุณาเลือกใหม่อีกครั้ง";
       statusText.classList.add("is-error");
       return;
     }
-    const maxGuests = getRoomCapacity(room);
-    if (maxGuests > 0 && used + guestCount > maxGuests) {
-      statusText.textContent = "ห้องพักนี้รองรับได้อีก " + Math.max(maxGuests - used, 0) + " คน กรุณาเลือกห้องอื่น";
-      statusText.classList.add("is-error");
-      return;
-    }
+    const remaining = getRoomVacancy(room, existing, editingPartyId);
+    const assignedGuests = Math.min(guestCount, getRoomCapacity(room), remaining);
+    roomBookings = assignedGuests > 0 ? [{ roomId: selectedRoomId, guests: assignedGuests }] : [];
+    pendingRoomGuests = Math.max(guestCount - assignedGuests, 0);
+  } else {
+    roomBookings = [];
+    pendingRoomGuests = 0;
   }
 
   const settings = getSettings();
@@ -372,12 +470,16 @@ form.addEventListener("submit", async (event) => {
     guestCount: formData.get("guestCount"),
     shirtCount: formData.get("shirtCount"),
     shirtSizes: selectedSizes,
-    roomId: selectedRoomId,
+    roomId: roomBookings[0]?.roomId || "",
+    roomGuestCount: roomBookings[0]?.guests || 0,
+    roomBookings,
+    pendingRoomGuests,
     souvenirReserved: formData.get("souvenirReserved") === "yes" && Number(settings.souvenirPrice || 0) > 0,
     eventFee: Number(settings.eventFee || 0),
     shirtPrice: Number(settings.shirtPrice || 0),
     souvenirPrice: Number(settings.souvenirPrice || 0),
-    totalDue: calculateTotal(formData.get("shirtCount"), settings, formData.get("souvenirReserved") === "yes"),
+    largeRoomCharge: getRoomPlan(roomBookings, pendingRoomGuests).largeRoomCharge || 0,
+    totalDue: calculateTotal(formData.get("shirtCount"), settings, formData.get("souvenirReserved") === "yes", getRoomPlan(roomBookings, pendingRoomGuests)),
     paymentStatus: current?.paymentStatus || (hasProofFile ? "รอตรวจสอบ" : "ยังไม่ชำระ"),
     paymentProof: hasProofFile ? { name: proofFile.name, type: proofFile.type, dataUrl: proofDataUrl } : (current?.paymentProof || null),
     registeredAt: current?.registeredAt || new Date().toISOString(),
@@ -447,7 +549,7 @@ adminList.addEventListener("click", (event) => {
     form.elements.guestCount.value = item.guestCount || 1;
     form.elements.shirtCount.value = item.shirtCount || 0;
     setSizes(item.shirtSizes || []);
-    roomSelect.value = item.roomId || "";
+    roomSelect.value = getRoomBookings(item)[0]?.roomId || item.roomId || "";
     if (form.elements.souvenirReserved) form.elements.souvenirReserved.checked = Boolean(item.souvenirReserved);
     submitButton.textContent = "บันทึกการแก้ไข";
     statusText.textContent = "กำลังแก้ไขข้อมูลของ " + getDisplayName(item);
@@ -496,6 +598,7 @@ if (publicRoomList) {
     if (!roomId) return;
     roomSelect.value = roomId;
     updateRoomSelect();
+    updateTotalPreview();
     roomBookingNote.textContent = "เลือกห้องพักแล้ว กรุณากรอกข้อมูลและกดส่งข้อมูลลงทะเบียนเพื่อยืนยันการจอง";
     form.scrollIntoView({ behavior: "smooth", block: "center" });
     renderPublicRooms();
@@ -533,7 +636,11 @@ if (publicRoomList) {
   }, true);
 }
 
-roomSelect.addEventListener("change", renderPublicRooms);
+roomSelect.addEventListener("change", updateTotalPreview);
 
-updateTotalPreview();
-renderPublicRooms();
+const initializePage = async () => {
+  await loadSiteData();
+  updateTotalPreview();
+  renderPublicRooms();
+};
+initializePage();

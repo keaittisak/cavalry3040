@@ -1,0 +1,10 @@
+{
+  "settings": {
+    "eventFee": 3000,
+    "shirtPrice": 0,
+    "souvenirPrice": 0,
+    "souvenirImage": null
+  },
+  "rooms": [],
+  "registrations": []
+}

@@ -33,9 +33,30 @@ const getRegistrations = () => JSON.parse(localStorage.getItem(registrationsKey)
   id: item.id || "legacy-party-" + index + "-" + (item.registeredAt || index)
 }));
 
-const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+const readFileAsDataUrl = (file, maxSize = 1280, quality = 0.82) => new Promise((resolve, reject) => {
   const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
+  reader.onload = () => {
+    if (!file?.type?.startsWith("image/")) {
+      resolve(reader.result);
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(maxSize / image.width, maxSize / image.height, 1);
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, width, height);
+      const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      resolve(outputType === "image/png" ? canvas.toDataURL(outputType) : canvas.toDataURL(outputType, quality));
+    };
+    image.onerror = reject;
+    image.src = reader.result;
+  };
   reader.onerror = reject;
   reader.readAsDataURL(file);
 });
@@ -165,8 +186,8 @@ roomForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (imageFiles.some((file) => file.size > 2 * 1024 * 1024)) {
-    roomStatus.textContent = "รูปภาพแต่ละภาพต้องมีขนาดไม่เกิน 2 MB";
+  if (imageFiles.some((file) => file.size > 8 * 1024 * 1024)) {
+    roomStatus.textContent = "รูปภาพแต่ละภาพต้องมีขนาดไม่เกิน 8 MB ก่อนย่อขนาด";
     roomStatus.classList.add("is-error");
     return;
   }
